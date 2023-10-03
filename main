@@ -1,0 +1,100 @@
+import random
+
+assumed_margin = 1.11 # The margin assumed for the market
+stake_per_fb_value = 10 # How much is staked for each £1 of FB return
+is_debug = False # CAUTION Do not set to True unless running the functions a few times and not thousands of times
+
+# Function which simulates a bet being placed. Returns the payout without stake, or loss.
+def place_bet(is_free_bet, minimum_only, stake):
+    # is_free_bet - Set to True if free bet, False if a cash bet
+    # minimum_only - Set to True if simulating someone betting the minimum stakes only for promotion
+    # stake - The amount staked for the bet
+    
+    # Assigns the odds of the bet from 1.5 to 5
+    bet_odds = 1.5 + random.randint(0, 15)/4
+    if minimum_only == True: # Sets odds to 1.5 if betting the minimum
+        bet_odds = 1.5
+    true_odds = bet_odds * assumed_margin # Sets the true odds based on the margin
+    
+    # Debug
+    if is_debug:
+        print(f"The odds are {bet_odds}")
+        print(f"The true odds are {true_odds}")
+    
+    # Generates result using random(). Result is a winner if this value is less than win_chance
+    win_chance = 1/true_odds
+    result = random.random()
+    
+    # Debug
+    if is_debug:
+        print(f"win chance is {win_chance}")
+        print(f"result is {result}")
+    
+    # Checks result against the win chance
+    # Bet is a loser
+    if win_chance < result:
+        
+        # Sets final cash position to the stake loss
+        final_position = -stake
+
+        # If bet is a free bet, final position set to 0 as no cash lost
+        if is_free_bet:
+            final_position = 0
+        
+        # Debug
+        if is_debug:
+            print("loser")
+
+    # Bet is a winner
+    else:
+        # Sets final cash position to bet win minus the stake, due to this being their cash originally
+        final_position = stake * (bet_odds-1)
+
+        # Debug
+        if is_debug:
+            print("winner")
+
+    # Debug
+    if debug:    
+        print(f"Total winnings is £{final_position}")
+        print("-----------------")
+    
+    return final_position
+
+
+# Simulates a player placing multiple bets and then using the subsequent free bet. Returns the player's final cash position
+def simulate_play(total_stake,plays_minimum):
+    # total_stake - The amount of cash the player will stake over all bets
+    # plays_minimum - True if player will play minimum odds only, False if not
+    
+    final_position = 0
+
+    # Loop which places X bets, where X is the free bet value for cash staked
+    for i in range(1,stake_per_fb_value):
+        
+        # Placing bet
+        single_bet_position = place_bet(False, plays_minimum, total_stake/stake_per_fb_value)
+        
+        final_position += single_bet_position
+
+    # Placing free bet
+    free_bet_winnings = place_bet(True, False, total_stake/stake_per_fb_value)
+
+    # Add free bet winnings
+    final_position += free_bet_winnings
+
+    # Debug
+    if is_debug:
+        print(f"Overall, this customer won £{final_position}")
+    
+    return final_position
+    
+overall_winnings = 0
+
+num_of_customers = 100000
+
+for i in range (1,num_of_customers):
+    winnings = simulate_play(100,True)
+    overall_winnings = overall_winnings + winnings
+    
+print(f"The overall operator position is £{-overall_winnings}, or £{round(-overall_winnings/num_of_customers,2)} per customer")
